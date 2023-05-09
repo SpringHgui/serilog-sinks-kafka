@@ -14,11 +14,22 @@ namespace Serilog.Sinks.Kafka
         /// Adds a sink that writes log events to a Kafka topic in the broker endpoints.
         /// </summary>
         /// <param name="loggerConfiguration">The logger configuration.</param>
+        /// <param name="bootstrapServers">The list of bootstrapServers separated by comma.</param>
         /// <param name="batchSizeLimit">The maximum number of events to include in a single batch.</param>
         /// <param name="period">The time in seconds to wait between checking for event batches.</param>
-        /// <param name="bootstrapServers">The list of bootstrapServers separated by comma.</param>
-        /// <param name="errorHandler">kafka errorHandler</param>
+        /// <param name="securityProtocol"></param>
+        /// <param name="saslMechanism"></param>
         /// <param name="topic">The topic name.</param>
+        /// <param name="saslUsername"></param>
+        /// <param name="saslPassword"></param>
+        /// <param name="sslCaLocation"></param>
+        /// <param name="messageKey"></param>
+        /// <param name="errorHandler">kafka errorHandler</param>
+        /// <param name="formatter"></param>
+        /// <param name="restrictedToMinimumLevel">The minimum level for
+        /// events passed through the sink. Ignored when <paramref name="levelSwitch"/> is specified.</param>
+        /// <param name="levelSwitch">A switch allowing the pass-through minimum level
+        /// to be changed at runtime.</param>
         /// <returns></returns>
         public static LoggerConfiguration Kafka(
             this LoggerSinkConfiguration loggerConfiguration,
@@ -63,7 +74,10 @@ namespace Serilog.Sinks.Kafka
         /// <param name="period">The time in seconds to wait between checking for event batches.</param>
         /// <param name="bootstrapServers">The list of bootstrapServers separated by comma.</param>
         /// <param name="errorHandler">kafka errorHandler</param>
-        /// <param name="topic">The topic name.</param>
+        /// <param name="restrictedToMinimumLevel">The minimum level for
+        /// events passed through the sink. Ignored when <paramref name="levelSwitch"/> is specified.</param>
+        /// <param name="levelSwitch">A switch allowing the pass-through minimum level
+        /// to be changed at runtime.</param>
         /// <returns></returns>
         public static LoggerConfiguration Kafka(
             this LoggerSinkConfiguration loggerConfiguration,
