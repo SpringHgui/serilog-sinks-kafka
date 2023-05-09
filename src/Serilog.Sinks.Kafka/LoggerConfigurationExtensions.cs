@@ -1,6 +1,7 @@
 ﻿using System;
 using Confluent.Kafka;
 using Serilog.Configuration;
+using Serilog.Core;
 using Serilog.Events;
 using Serilog.Formatting;
 using Serilog.Sinks.PeriodicBatching;
@@ -32,7 +33,9 @@ namespace Serilog.Sinks.Kafka
             string sslCaLocation = null,
             string messageKey = null,
             Action<IProducer<string, byte[]>, Error> errorHandler = null,
-            ITextFormatter formatter = null)
+            ITextFormatter formatter = null,
+            LogEventLevel restrictedToMinimumLevel = LevelAlias.Minimum,
+            LoggingLevelSwitch? levelSwitch = null) 
         {
             return loggerConfiguration.Kafka(
                 bootstrapServers,
@@ -47,7 +50,9 @@ namespace Serilog.Sinks.Kafka
                 topicDecider: null,
                 messageKey,
                 errorHandler,
-                formatter);
+                formatter, 
+                restrictedToMinimumLevel,
+                levelSwitch);
         }
 
         /// <summary>
@@ -73,7 +78,9 @@ namespace Serilog.Sinks.Kafka
             string sslCaLocation = null,
             string messageKey = null,
             Action<IProducer<string, byte[]>, Error> errorHandler = null,
-            ITextFormatter formatter = null)
+            ITextFormatter formatter = null,
+            LogEventLevel restrictedToMinimumLevel = LevelAlias.Minimum,
+            LoggingLevelSwitch? levelSwitch = null) 
         {
             return loggerConfiguration.Kafka(
                 bootstrapServers,
@@ -88,7 +95,9 @@ namespace Serilog.Sinks.Kafka
                 topicDecider,
                 messageKey,
                 errorHandler,
-                formatter);
+                formatter,
+                restrictedToMinimumLevel, 
+                levelSwitch);
         }
 
         public static LoggerConfiguration Kafka(
@@ -100,9 +109,12 @@ namespace Serilog.Sinks.Kafka
             int period = 5,
             string messageKey = null,
             Action<IProducer<string, byte[]>, Error> errorHandler = null,
-            ITextFormatter formatter = null)
+            ITextFormatter formatter = null,
+            LogEventLevel restrictedToMinimumLevel = LevelAlias.Minimum,
+            LoggingLevelSwitch? levelSwitch = null) 
         {
-            return loggerConfiguration.Kafka(producerConfig, topic, batchSizeLimit, period, topicDecider, messageKey, errorHandler, formatter);
+            return loggerConfiguration.Kafka(producerConfig, topic, batchSizeLimit, period, topicDecider, messageKey, 
+                errorHandler, formatter, restrictedToMinimumLevel, levelSwitch);
         }
 
         private static LoggerConfiguration Kafka(
@@ -119,7 +131,9 @@ namespace Serilog.Sinks.Kafka
             Func<LogEvent, string> topicDecider,
             string messageKey,
             Action<IProducer<string, byte[]>, Error> errorHandler,
-            ITextFormatter formatter)
+            ITextFormatter formatter,
+            LogEventLevel restrictedToMinimumLevel = LevelAlias.Minimum,
+            LoggingLevelSwitch? levelSwitch = null)
         {
             return loggerConfiguration.Kafka(new ProducerConfig()
             {
@@ -129,7 +143,8 @@ namespace Serilog.Sinks.Kafka
                 SaslUsername = saslUsername,
                 SaslPassword = saslPassword,
                 SslCaLocation = sslCaLocation
-            }, topic, batchSizeLimit, period, topicDecider, messageKey, errorHandler, formatter);
+            }, topic, batchSizeLimit, period, topicDecider, messageKey, errorHandler, formatter,
+            restrictedToMinimumLevel, levelSwitch);
         }
 
         private static LoggerConfiguration Kafka(
@@ -141,8 +156,29 @@ namespace Serilog.Sinks.Kafka
            Func<LogEvent, string> topicDecider,
            string messageKey,
            Action<IProducer<string, byte[]>, Error> errorHandler,
-           ITextFormatter formatter)
+           ITextFormatter formatter,
+           LogEventLevel restrictedToMinimumLevel = LevelAlias.Minimum,
+           LoggingLevelSwitch? levelSwitch = null) 
         {
+            return ConfigureKafka(loggerConfiguration.Sink, formatter, producerConfig, topic, batchSizeLimit, 
+                period, topicDecider, messageKey, errorHandler, restrictedToMinimumLevel, levelSwitch);
+        }
+
+        static LoggerConfiguration ConfigureKafka(
+            this Func<ILogEventSink, LogEventLevel, LoggingLevelSwitch?, LoggerConfiguration> addSink,
+            ITextFormatter formatter,
+            ProducerConfig producerConfig,
+            string topic,
+            int batchSizeLimit,
+            int period,
+            Func<LogEvent, string> topicDecider,
+            string messageKey,
+            Action<IProducer<string, byte[]>, Error> errorHandler,
+            LogEventLevel restrictedToMinimumLevel,
+            LoggingLevelSwitch? levelSwitch) 
+        {
+            if (addSink == null) throw new ArgumentNullException(nameof(addSink));
+            
             var kafkaSink = new KafkaSink(
                 producerConfig,
                 topic,
@@ -159,8 +195,7 @@ namespace Serilog.Sinks.Kafka
                 kafkaSink,
                 batchingOptions);
 
-            return loggerConfiguration
-                .Sink(batchingSink);
+            return addSink(batchingSink, restrictedToMinimumLevel, levelSwitch);
         }
     }
 }
